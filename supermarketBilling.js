@@ -113,11 +113,7 @@ const calculateInvoice = (purchaseItems) => {
                     }
 
                     // Apply the maximum discount from the category and item discounts
-                    let maxDiscount = Math.max(
-                        ...category.discount,
-                        ...subcategory.discount,
-                        ...item.discount
-                    );
+                    let maxDiscount = Math.max(category.discount, subcategory.discount, item.discount);
 
                     // Calculate the saved amount
                     let savedAmount = itemAmount * maxDiscount
@@ -155,7 +151,7 @@ console.log(`Customer: ${customerName}`);
 console.log("\nItem Qty Amount");
 for (const purchaseItem of purchaseItems) {
     console.log(
-        `${purchaseItem.name} ${purchaseItem.qty} ${purchaseItem.unit} ${(
+        `${purchaseItem.name} ${purchaseItem.qty}${purchaseItem.unit} ${(
             (referenceData.categories.find((c) =>
                 c.subcategories.some((subcat) =>
                     subcat.items.some((item) => item.name === purchaseItem.name)
