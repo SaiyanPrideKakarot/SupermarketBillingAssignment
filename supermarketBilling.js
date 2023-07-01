@@ -12,7 +12,7 @@ const referenceData = {
                             name: "Apple",
                             unit: "kg",
                             price: 50,
-                            discount: null
+                            discount: 0.25  // Buy 3kg Get 1kg Free i.e. 25%
                         },
                         {
                             name: "Orange",
@@ -30,7 +30,7 @@ const referenceData = {
                             name: "Potato",
                             unit: "kg",
                             price: 30,
-                            discount: null
+                            discount: 0.285714286 // Buy 5kg Get 2kg Free i.e. 28.5714286%
                         },
                         {
                             name: "Tomato",
@@ -54,7 +54,7 @@ const referenceData = {
                             name: "Cow Milk",
                             unit: "lt",
                             price: 50,
-                            discount: null
+                            discount: 0.25 // Buy 3lt Get 1lt Free i.e. 25%
                         },
                         {
                             name: "Soy Milk",
@@ -72,7 +72,7 @@ const referenceData = {
                             name: "Cheddar",
                             unit: "kg",
                             price: 50,
-                            discount: null
+                            discount: 0.3333 // Buy 2kg Get 1kg Free i.e. 33.33%
                         },
                         {
                             name: "Gouda",
@@ -87,50 +87,6 @@ const referenceData = {
     ]
 }
 
-// Function to calculate total bill and amount saved
-const calculateInvoice = (purchaseItems) => {
-    let totalAmount = 0, totalSavedAmount = 0
-
-    for (const purchaseItem of purchaseItems) {
-        const category = referenceData.categories.find((c) => c.subcategories.some((subcat) => subcat.items.some((item) => item.name === purchaseItem.name)));
-
-        if (category) {
-            const subcategory = category.subcategories.find((subcat) => subcat.items.some((item) => item.name === purchaseItem.name));
-            if (subcategory) {
-                const item = subcategory.items.find((item) => item.name === purchaseItem.name);
-                if (item) {
-                    let itemAmount = 0
-
-                    if (purchaseItem.unit === item.unit) {
-                        itemAmount = purchaseItem.qty * item.price
-                    } else {
-                        // For weighted items, calculate price based on unit price and quantity
-                        if (purchaseItem.unit === "kg") {
-                            itemAmount = (purchaseItem.qty * 1000 * item.price) / (item.unit === "kg" ? 1 : 1000)
-                        } else if (purchaseItem.unit === 'lt') {
-                            itemAmount = (purchaseItem.qty * 1000 * item.price) / (item.unit === "lt" ? 1 : 1000)
-                        }
-                    }
-
-                    // Apply the maximum discount from the category and item discounts
-                    let maxDiscount = Math.max(category.discount, subcategory.discount, item.discount);
-
-                    // Calculate the saved amount
-                    let savedAmount = itemAmount * maxDiscount
-                    totalSavedAmount += savedAmount
-
-                    // Deduct the saved amount from the item amount to get the final amount
-                    itemAmount -= savedAmount
-
-                    totalAmount += itemAmount
-                }
-            }
-        }
-    }
-
-    return { totalAmount, totalSavedAmount }
-}
-
 // Sample Input
 const customerName = "Anish Kumar"
 const purchaseItems = [
@@ -142,33 +98,59 @@ const purchaseItems = [
     { name: "Gouda", unit: "kg", qty: 2 }
 ]
 
-// Generate Invoice
-const invoice = calculateInvoice(purchaseItems)
-
-// Output the invoice and amount saved
-console.log("Following is the invoice that is generated based on the above items that customer has bought:");
+console.log("\nFollowing is the invoice that is generated based on the above items that customer has bought:");
 console.log(`Customer: ${customerName}`);
 console.log("\nItem Qty Amount");
-for (const purchaseItem of purchaseItems) {
-    console.log(
-        `${purchaseItem.name} ${purchaseItem.qty}${purchaseItem.unit} ${(
-            (referenceData.categories.find((c) =>
-                c.subcategories.some((subcat) =>
-                    subcat.items.some((item) => item.name === purchaseItem.name)
-                )
-            ) || {}).subcategories.find((subcat) =>
-                subcat.items.some((item) => item.name === purchaseItem.name)
-            ) || {}
-        ).items.find((item) => item.name === purchaseItem.name).price.toFixed(2)} Rs`
-    );
+
+let totalAmount = 0, totalSavedAmount = 0, itemAmount = 0;
+let TAWD = 0;
+for (let i = 0; i < purchaseItems.length; i++) {
+    const category = referenceData.categories.find((c) => c.subcategories.some((subcat) => subcat.items.some((item) => item.name === purchaseItems[i].name)));
+
+    if (category) {
+        const subcategory = category.subcategories.find((subcat) => subcat.items.some((item) => item.name === purchaseItems[i].name));
+        if (subcategory) {
+            const item = subcategory.items.find((item) => item.name === purchaseItems[i].name);
+            if (item) {
+                // let itemAmount = 0
+
+                if (purchaseItems[i].unit === item.unit) {
+                    itemAmount = purchaseItems[i].qty * item.price
+                } else {
+                    // For weighted items, calculate price based on unit price and quantity
+                    if (purchaseItems[i].unit === "kg") {
+                        itemAmount = (purchaseItems[i].qty * 1000 * item.price) / (item.unit === "kg" ? 1 : 1000)
+                    } else if (purchaseItems[i].unit === 'lt') {
+                        itemAmount = (purchaseItems[i].qty * 1000 * item.price) / (item.unit === "lt" ? 1 : 1000)
+                    }
+                }
+
+                // Total Amount Without Discount(TAWD)
+                TAWD += itemAmount
+
+                // Apply the maximum discount from the category and item discounts
+                let maxDiscount = Math.max(category.discount, subcategory.discount, item.discount);
+
+                // Calculate the saved amount
+                let savedAmount = itemAmount * maxDiscount
+                totalSavedAmount += savedAmount
+
+                // Deduct the saved amount from the item amount to get the final amount
+                itemAmount -= savedAmount
+
+                totalAmount += itemAmount
+            }
+        }
+    }
+    console.log(purchaseItems[i].name, (purchaseItems[i].qty).toString(), purchaseItems[i].unit, itemAmount.toFixed(2));
 }
-console.log("\nTotal Amount", invoice.totalAmount.toFixed(2), "Rs");
+console.log("\nTotal Amount", totalAmount.toFixed(2), "Rs");
 console.log(
     "\nYou Saved",
-    invoice.totalSavedAmount.toFixed(2),
+    TAWD.toFixed(2),
     "-",
-    invoice.totalAmount.toFixed(2),
+    totalAmount.toFixed(2),
     "=",
-    (invoice.totalSavedAmount - invoice.totalAmount).toFixed(2),
+    (TAWD - totalAmount).toFixed(2),
     "Rs"
 );
